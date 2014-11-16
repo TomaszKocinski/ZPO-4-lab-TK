@@ -1,155 +1,306 @@
-
+/* ========================================
+Laboratorium 4
+WMP.SNS UKSW, Warszawa
+========================================
+*/
 #include<iostream>
 #include<fstream>
 #include<string>
+#include<limits>
+#include<exception>
+
 using namespace std;
 
-class pierwszy:public exception{
+class Bazowe_Cechy {
 public:
-	int amount;
-	pierwszy(int arg){
-		amount=arg;
-	}
-	string blad(){
-		string temp;
-		temp+="siema jest blad, rozmiar jest";
-		temp+=amount;
-		temp+="za pewne zostal on przepelniony\n";
-		return temp;
-	}
-	string blad2(){
-		string temp;
-		temp+="siema jest blad, rozmiar jest";
-		temp+=amount;
-		temp+="pewnie probowales wyjmowac z pustego stosu\n";
-		return temp;
-	}
+	static const bool _jest_liczba = false;
+	static const bool _nalezy_do_przedzialu = false;
+	static const bool _jest_liczba_calkowita = false;
+	static const int _dolna_granica_przedzialu = 0;
+	static const int _gorna_granica_przedzialu = 0;
+	static const bool _jest_parzysta = false;
 };
-class nextstack:public exception{public:nextstack(){}};
-class closestack:public exception{public:closestack(){}};
-class koniec:public exception{public:koniec(){}};
 
-template<typename T, int rozmiar>
+template<typename T>
+class Cechy: public Bazowe_Cechy {
+public:
+	static const double dolna_granica_przedzialu() { return 0; };
+	static const double gorna_granica_przedzialu() { return 0; };
+};
+
+class temperatura_wody {
+	double t;
+public:
+	temperatura_wody(double temp = 50): t(temp) {};
+	double operator()() { return t; };
+	temperatura_wody& operator=(double temp) { t = temp; return *this; };
+};
+
+template<>
+class Cechy<temperatura_wody>: public Bazowe_Cechy {
+public:
+	static const bool _jest_liczba = true;
+	static const bool _nalezy_do_przedzialu = true;
+	static const double dolna_granica_przedzialu() { return 0; };
+	static const double gorna_granica_przedzialu() { return 100; };
+};
+
+class cel {
+	double t;
+public:
+	cel(double temp = 50): t(temp) {};
+	double operator()() { return t; };
+	cel& operator=(double temp) { t = temp; return *this; };
+};
+
+template<>
+class Cechy<cel>: public Bazowe_Cechy {
+public:
+	static const bool _jest_liczba = true;
+	static const bool _nalezy_do_przedzialu = true;
+	static const double dolna_granica_przedzialu() { return -273.17; };
+	static const double gorna_granica_przedzialu() { return DBL_MAX; };
+};
+
+class kostka_do_gry {
+	int n;
+public:
+	kostka_do_gry(int num = 1): n(num) {};
+	int operator()() { return n; };
+	kostka_do_gry& operator=(int num) { n = num; return *this; };
+};
+
+template<>
+class Cechy<kostka_do_gry>: public Bazowe_Cechy  {
+public:
+	static const bool _jest_liczba = true;
+	static const bool _nalezy_do_przedzialu = true;
+	static const bool _jest_liczba_calkowita = true;
+	static const int _dolna_granica_przedzialu = 1;
+	static const int _gorna_granica_przedzialu = 6;
+
+};
+
+class nat {
+	int n;
+public:
+	nat(int num = 1): n(num) {};
+	int operator()() { return n; };
+	nat& operator=(int num) { n = num; return *this; };
+};
+
+template<>
+class Cechy<nat>: public Bazowe_Cechy  {
+public:
+	static const bool _jest_liczba = true;
+	static const bool _nalezy_do_przedzialu = true;
+	static const bool _jest_liczba_calkowita = true;
+	static const int _dolna_granica_przedzialu = 0;
+	static const int _gorna_granica_przedzialu = INT_MAX;
+};
+
+class parz {
+	int n;
+public:
+	parz():n(2){};
+	parz(int num):n(num){};
+	int operator()() { return n; };
+	parz& operator=(int num) { n = num; return *this; };
+};
+
+template<>
+class Cechy<parz>: public Bazowe_Cechy  {
+public:
+	static const bool _jest_liczba = true;
+	static const bool _nalezy_do_przedzialu = true;
+	static const bool _jest_liczba_calkowita = true;
+	static const int _dolna_granica_przedzialu = 2;
+	static const int _gorna_granica_przedzialu = INT_MAX-1;
+	static const bool _jest_parzysta = true;
+};
+
+class Przepelnienie: public exception {
+	char opis[100];
+public:
+	Przepelnienie(const char* o) { strcpy_s(opis,o); }
+	const char* what() const throw() { return opis;	};
+};
+class BrakDanych: public exception {
+	char opis[100];
+public:
+	BrakDanych(const char* o) { strcpy_s(opis,o); }
+	const char* what() const throw() { return opis;	};
+};
+
+
+template<typename T, int rozmiar, class _Cechy = Cechy<T>>
 class SzablonStosu{ 
 	T stos[rozmiar];
 	int top;
 public:
+	int zajetosc() { return top; };
 	SzablonStosu() : top(0) {}
 	void push(const T& i) {
 		if(top==rozmiar)
-			throw pierwszy(top);
+			throw Przepelnienie(typeid(i).name());
 		stos[top++] = i;
+	}
+	void push(int i) {
+		if(top==rozmiar)
+			throw Przepelnienie(typeid(i).name());
+		if(Cechy<T>::_jest_liczba && Cechy<T>::_jest_liczba_calkowita) {
+			if(Cechy<T>::_nalezy_do_przedzialu) {
+				if((Cechy<T>::_dolna_granica_przedzialu <= i) && (i <= Cechy<T>::_gorna_granica_przedzialu)){
+					if(Cechy<T>::_jest_parzysta){
+						if(i%2==0)
+							stos[top++] = i;
+					}
+					else
+						stos[top++] = i;
+				}
+			} 
+			else
+				stos[top++] = i;
+		}
+	}
+	void push(double i) {
+		if(top==rozmiar)
+			throw Przepelnienie(typeid(i).name());
+		if(Cechy<T>::_jest_liczba && !Cechy<T>::_jest_liczba_calkowita) {
+			if(Cechy<T>::_nalezy_do_przedzialu) {
+				if((Cechy<T>::dolna_granica_przedzialu() <= i) && (i <= Cechy<T>::gorna_granica_przedzialu()))
+					stos[top++] = i;
+			} 
+			else
+				stos[top++] = i;
+		}
 	}
 	T pop() {
 		if(top==0)
-			throw pierwszy(top);
+			throw BrakDanych(typeid(stos[0]).name());
 		return stos[--top];
 	}
+	class iterator {
+		SzablonStosu& s;
+		int index;
+	public:
+		iterator(SzablonStosu& is) : s(is), index(0) {}
+		iterator(SzablonStosu& is, bool) : s(is), index(s.top) {}
+		int operator++() { // Prefix
+			assert(index < s.top); 
+			return s.stack[++index];
+		}
+		int operator++(int) { // Postfix
+			assert(index < s.top);
+			return s.stack[index++];
+		}
+		bool operator==(const iterator& rv) const {
+			return index == rv.index;
+		}
+		bool operator!=(const iterator& rv) const {
+			return index != rv.index;
+		} 
+		friend ostream& operator<<(ostream& out,iterator&);
+	}; 
+	iterator begin() { return iterator(*this); }
+	iterator end() { return iterator(*this, true);}
+	friend class iterator;
+	
 };
-template<typename T, int rozmiar>
-class SzablonSprytnegoStosu {
-	SzablonStosu<T, rozmiar> *sp;
-public:
-	SzablonSprytnegoStosu<T,rozmiar> *nast;
-	SzablonSprytnegoStosu<T,rozmiar> *poprz;
-	SzablonSprytnegoStosu (): sp(0), nast(0), poprz(0) { };
-	void push(const T& i) {
-		if (!sp) 
-			sp = new SzablonStosu<T,rozmiar>;
-		try{
-			sp->push(i);
-		}catch(pierwszy arg){
-			cout<<arg.blad();
-			throw nextstack();
-		}
-	};
-	T pop() {
-		try{
-			if (sp)
-				return sp->pop();
-		}
-		catch(pierwszy arg){
-			cout<<arg.blad2();
-			throw closestack();
-		}
-	};
-	~SzablonSprytnegoStosu() {      
-		delete sp; 
-	};
-};
-template<typename T, int rozmiar>
-class KontenerStos {
-	SzablonSprytnegoStosu<T,rozmiar> *glowa;
-	SzablonSprytnegoStosu<T,rozmiar> *wsk;
-public:
-	KontenerStos(): wsk(0) {
-		glowa = new SzablonSprytnegoStosu<T,rozmiar>;
-		wsk=glowa;
-	};
-	~KontenerStos() {
-		wsk=glowa;
-		while (wsk->nast!=NULL) {
-			glowa=wsk->nast;
-			delete wsk;
-		};
-		delete glowa;
-	};
-	void push(const T& i) {
-		try{
-			wsk->push(i);
-		}
-		catch(nextstack){
-			wsk->nast=new SzablonSprytnegoStosu<T,rozmiar>;
-			wsk->nast->poprz=wsk;
-			wsk=wsk->nast;
-			wsk->push(i);
-		}
-	};
-	T pop() {
-		try{
-			wsk->pop();
-		}
-		catch(closestack){
-			if(wsk->poprz){
-				wsk=wsk->poprz;
-				delete wsk->nast;
-				wsk->nast=0;
-				wsk->pop();
-			}else{
-				cout<<"probujesz pop przy pustym pustym stosie\n";
-				throw koniec();
-			}
-		}
-		return T(); 
-	};
-};
+template<typename T, int rozmiar, class _Cechy = Cechy<T>>
+ostream& operator<<(ostream& out,SzablonStosu<T,rozmiar,Cechy<T>>& arg){
+	return out<<arg;
+}
+template<typename T, int rozmiar, class _Cechy = Cechy<T>>
+void wypisz(ostream& out,SzablonStosu<T,rozmiar>& arg) {
+	SzablonStosu<nat,10>::iterator it(arg);
+	while (it!=arg.end()) {
+		cout<<it;
+		it++;
+	}
+}
+
 int main() {
-	KontenerStos<string,3> K;
+	SzablonStosu<string,5> K1;
+	SzablonStosu<temperatura_wody,10> K2;
+	SzablonStosu<kostka_do_gry,10> K3;
+	SzablonStosu<parz,10> K4;
+	SzablonStosu<nat,10> K5;
+	SzablonStosu<cel,10> K6;
+	// zapełnianie stosu
 	ifstream fi("qv.txt");
-	string s,t;
-	try {
+	string s;
+	try{
+		K1.push("Henryk");
+		K1.push("Sienkiewicz");
 		while (fi) {
-			fi >> s;
-			t+=s;
-			K.push(t);
+			fi >> s; 
+			K1.push(s);
 			fi.seekg(ios::beg);
 			fi.clear();
-		}
+		};
 	}
-	catch (std::bad_alloc &ba) {
-		cout << "bad_alloc caught: " << ba.what() << endl;
-		cout << "Press ENTER to continue" << endl;
-		cin.ignore();
+	catch(Przepelnienie& e){
+		cout << "K1 gotowy: " << e.what() << endl;
+	};
+	cout << "Danych na stosie K1: " << K1.zajetosc() << endl;
+
+	K2.push(temperatura_wody());
+	K2.push(temperatura_wody(36.6));
+	K2.push(40.0);
+	K2.push(71.2);
+	cout << "Danych na stosie K2: " << K2.zajetosc() << endl;
+
+	K3.push(kostka_do_gry(3));
+	K3.push(kostka_do_gry());
+	K3.push(4);
+	K3.push(6);
+	K3.push(10);
+	cout << "Danych na stosie K3: " << K3.zajetosc() << endl;
+
+	K4.push(parz(3));
+	K4.push(parz());
+	K4.push(3);
+	K4.push(6);
+	K4.push(10);
+	cout << "Danych na stosie K4: " << K4.zajetosc() << endl;
+
+	K5.push(nat(3));
+	K5.push(nat());
+	K5.push(-3);
+	K5.push(6);
+	K5.push(10);
+	cout << "Danych na stosie K5: " << K5.zajetosc() << endl;
+
+	K6.push(cel(3));
+	K6.push(cel());
+	K6.push(-334.2);
+	K6.push(6.5);
+	K6.push(10.1);
+	cout << "Danych na stosie K6: " << K6.zajetosc() << endl;
+
+	// opróżnianie stosu
+	try{
+		while (true)
+			K1.pop();
 	}
- 
-	fi.seekg(ios::beg);
-	fi.clear();
-	while (true)
-		try{K.pop();
+	catch(BrakDanych& e) {
+		cout << "K1 pusty: " << e.what() << endl;
 	}
-	catch(...){
-		break;
+	try{
+		while (true)
+			K2.pop();
 	}
-	system("pause");
+	catch(BrakDanych& e) {
+		cout << "K2 pusty: " << e.what() << endl;
+	}
+	try{
+		while (true)
+			K3.pop();
+	}
+	catch(BrakDanych& e) {
+		cout << "K3 pusty: " << e.what() << endl;
+	}
+
 	return 0;
 }
