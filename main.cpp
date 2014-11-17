@@ -25,11 +25,15 @@ public:
 };
 
 class temperatura_wody {
-	double t;
+	double n;
 public:
-	temperatura_wody(double temp = 50): t(temp) {};
-	double operator()() { return t; };
-	temperatura_wody& operator=(double temp) { t = temp; return *this; };
+	temperatura_wody(double temp = 50): n(temp) {};
+	double operator()() { return n; };
+	temperatura_wody& operator=(double temp) { n = temp; return *this; };
+	friend ostream& operator<<(ostream& out,temperatura_wody& arg){
+		out<<arg.n;
+			return out;
+		}
 };
 
 template<>
@@ -47,6 +51,10 @@ public:
 	cel(double temp = 50): n(temp) {};
 	double operator()() { return n; };
 	cel& operator=(double temp) { n = temp; return *this; };
+	friend ostream& operator<<(ostream& out,cel& arg){
+		out<<arg.n;
+			return out;
+		}
 };
 
 template<>
@@ -64,6 +72,10 @@ public:
 	kostka_do_gry(int num = 1): n(num) {};
 	int operator()() { return n; };
 	kostka_do_gry& operator=(int num) { n = num; return *this; };
+	friend ostream& operator<<(ostream& out,kostka_do_gry& arg){
+		out<<arg.n;
+			return out;
+		}
 };
 
 template<>
@@ -83,6 +95,10 @@ public:
 	nat(int num = 1): n(num) {};
 	int operator()() { return n; };
 	nat& operator=(int num) { n = num; return *this; };
+	friend ostream& operator<<(ostream& out,nat& arg){
+		out<<arg.n;
+			return out;
+		}
 };
 
 template<>
@@ -135,10 +151,9 @@ public:
 
 template<typename T, int rozmiar, class _Cechy = Cechy<T>>
 class SzablonStosu{ 
-public:
+	public:
 	T stos[rozmiar];
 	int top;
-
 	int zajetosc() { return top; };
 	SzablonStosu() : top(0) {}
 	void push(const T& i) {
@@ -155,12 +170,10 @@ public:
 					if(Cechy<T>::_jest_parzysta){
 						if(i%2==0)
 							stos[top++] = i;
-					}
-					else
+					}else
 						stos[top++] = i;
 				}
-			} 
-			else
+			}else
 				stos[top++] = i;
 		}
 	}
@@ -171,8 +184,7 @@ public:
 			if(Cechy<T>::_nalezy_do_przedzialu) {
 				if((Cechy<T>::dolna_granica_przedzialu() <= i) && (i <= Cechy<T>::gorna_granica_przedzialu()))
 					stos[top++] = i;
-			} 
-			else
+			} else
 				stos[top++] = i;
 		}
 	}
@@ -183,10 +195,10 @@ public:
 	}
 	
 	class iterator {
-			public:
+		public:	
 		SzablonStosu& s;
 		int index;
-
+		
 		iterator(SzablonStosu& is) : s(is), index(0) {}
 		iterator(SzablonStosu& is, bool) : s(is), index(is.top) {}
 		T operator++() { // Prefix
@@ -203,26 +215,19 @@ public:
 		bool operator!=(const iterator& rv) const {
 			return index != rv.index;
 		} 
-		friend ostream& operator<<(ostream& out,iterator& arg){
-			out<<arg.s;
-			return out;
-		}
+		T operator*() const { return s.stos[index];}
 	}; 
 	iterator begin() { return iterator(*this); }
 	iterator end() { return iterator(*this, true);}
-	friend ostream& operator<<(ostream& out,SzablonStosu& arg){
-		out<<arg.stos;
-			return out;
-		}
 	friend class iterator;
-	
+
 };
 
 template<typename T, int rozmiar>
 void wypisz(ostream& out,SzablonStosu<T,rozmiar>& arg) {
 	SzablonStosu<T,rozmiar>::iterator it(arg);
 	while (it!=arg.end()) {
-		out<<it;
+		out<<*it<<' ';
 		it++;
 	}
 }
@@ -240,12 +245,12 @@ int main() {
 	try{
 		K1.push("Henryk");
 		K1.push("Sienkiewicz");
-		while (fi) {
+		/*while (fi) {
 			fi >> s; 
 			K1.push(s);
 			fi.seekg(ios::beg);
 			fi.clear();
-		};
+		};*/
 	}
 	catch(Przepelnienie& e){
 		cout << "K1 gotowy: " << e.what() << endl;
