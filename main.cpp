@@ -193,7 +193,6 @@ class SzablonStosu{
 			throw BrakDanych(typeid(stos[0]).name());
 		return stos[--top];
 	}
-	
 	class iterator {
 		public:	
 		SzablonStosu& s;
@@ -238,8 +237,6 @@ int main() {
 	SzablonStosu<parz,10> K4;
 	SzablonStosu<nat,10> K5;
 	SzablonStosu<cel,10> K6;
-	
-
 	ifstream fi("qv.txt");
 	string s;
 	try{
