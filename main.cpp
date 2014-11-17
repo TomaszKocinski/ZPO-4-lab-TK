@@ -1,13 +1,9 @@
-/* ========================================
-Laboratorium 4
-WMP.SNS UKSW, Warszawa
-========================================
-*/
 #include<iostream>
 #include<fstream>
 #include<string>
 #include<limits>
 #include<exception>
+#include<assert.h>
 
 using namespace std;
 
@@ -46,11 +42,11 @@ public:
 };
 
 class cel {
-	double t;
+	double n;
 public:
-	cel(double temp = 50): t(temp) {};
-	double operator()() { return t; };
-	cel& operator=(double temp) { t = temp; return *this; };
+	cel(double temp = 50): n(temp) {};
+	double operator()() { return n; };
+	cel& operator=(double temp) { n = temp; return *this; };
 };
 
 template<>
@@ -106,6 +102,10 @@ public:
 	parz(int num):n(num){};
 	int operator()() { return n; };
 	parz& operator=(int num) { n = num; return *this; };
+	friend ostream& operator<<(ostream& out,parz& arg){
+		out<<arg.n;
+			return out;
+		}
 };
 
 template<>
@@ -135,9 +135,10 @@ public:
 
 template<typename T, int rozmiar, class _Cechy = Cechy<T>>
 class SzablonStosu{ 
+public:
 	T stos[rozmiar];
 	int top;
-public:
+
 	int zajetosc() { return top; };
 	SzablonStosu() : top(0) {}
 	void push(const T& i) {
@@ -180,19 +181,21 @@ public:
 			throw BrakDanych(typeid(stos[0]).name());
 		return stos[--top];
 	}
+	
 	class iterator {
+			public:
 		SzablonStosu& s;
 		int index;
-	public:
+
 		iterator(SzablonStosu& is) : s(is), index(0) {}
-		iterator(SzablonStosu& is, bool) : s(is), index(s.top) {}
-		int operator++() { // Prefix
+		iterator(SzablonStosu& is, bool) : s(is), index(is.top) {}
+		T operator++() { // Prefix
 			assert(index < s.top); 
-			return s.stack[++index];
+			return s.stos[++index];
 		}
-		int operator++(int) { // Postfix
+		T operator++(int) { // Postfix
 			assert(index < s.top);
-			return s.stack[index++];
+			return s.stos[index++];
 		}
 		bool operator==(const iterator& rv) const {
 			return index == rv.index;
@@ -200,34 +203,38 @@ public:
 		bool operator!=(const iterator& rv) const {
 			return index != rv.index;
 		} 
-		friend ostream& operator<<(ostream& out,iterator&);
+		friend ostream& operator<<(ostream& out,iterator& arg){
+			out<<arg.s;
+			return out;
+		}
 	}; 
 	iterator begin() { return iterator(*this); }
 	iterator end() { return iterator(*this, true);}
+	friend ostream& operator<<(ostream& out,SzablonStosu& arg){
+		out<<arg.stos;
+			return out;
+		}
 	friend class iterator;
 	
 };
-template<typename T, int rozmiar, class _Cechy = Cechy<T>>
-ostream& operator<<(ostream& out,SzablonStosu<T,rozmiar,Cechy<T>>& arg){
-	return out<<arg;
-}
-template<typename T, int rozmiar, class _Cechy = Cechy<T>>
+
+template<typename T, int rozmiar>
 void wypisz(ostream& out,SzablonStosu<T,rozmiar>& arg) {
-	SzablonStosu<nat,10>::iterator it(arg);
+	SzablonStosu<T,rozmiar>::iterator it(arg);
 	while (it!=arg.end()) {
-		cout<<it;
+		out<<it;
 		it++;
 	}
 }
-
 int main() {
-	SzablonStosu<string,5> K1;
+	SzablonStosu<string,10> K1;
 	SzablonStosu<temperatura_wody,10> K2;
 	SzablonStosu<kostka_do_gry,10> K3;
 	SzablonStosu<parz,10> K4;
 	SzablonStosu<nat,10> K5;
 	SzablonStosu<cel,10> K6;
-	// zapełnianie stosu
+	
+
 	ifstream fi("qv.txt");
 	string s;
 	try{
@@ -279,7 +286,14 @@ int main() {
 	K6.push(10.1);
 	cout << "Danych na stosie K6: " << K6.zajetosc() << endl;
 
-	// opróżnianie stosu
+
+	wypisz<string,10>(cout,K1); cout<<'\n';
+	wypisz<temperatura_wody,10>(cout,K2); cout<<'\n';
+	wypisz<kostka_do_gry,10>(cout,K3); cout<<'\n';
+	wypisz<parz,10>(cout,K4); cout<<'\n';
+	wypisz<nat,10>(cout,K5); cout<<'\n';
+	wypisz<cel,10>(cout,K6); cout<<'\n';
+	// opr�nianie stosu
 	try{
 		while (true)
 			K1.pop();
